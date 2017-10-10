@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Помощник стоматолога</string>
+    <string name="action_camera">Камера</string>
+    <string name="default_main_activity_alert">Добавьте фотографию лица человека\n из галереи или сфотографируйте.</string>
+</resources>
