@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     ImageButton btn_calc_edges;
 
 
-    private int RESIZE_PHOTO_PIXELS_PERCENTAGE = 100;
+    private int RESIZE_PHOTO_PIXELS_PERCENTAGE = 80;
     private MagicalPermissions magicalPermissions;
     private MagicalCamera magicalCamera;
 
@@ -182,11 +182,12 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     private void buttonRotate(View v) {
-        // TODO: Not working
-        magicalCamera.setPhoto(magicalCamera.rotatePicture(magicalCamera.getPhoto(),
+        magicalCamera.setPhoto(magicalCamera.rotatePicture(bitmapRaw,
                 MagicalCamera.ORIENTATION_ROTATE_90));
-        photoView.setImageBitmap(magicalCamera.getPhoto());
-        canvas = new Canvas(magicalCamera.getPhoto());
+        bitmap = magicalCamera.getPhoto();
+        bitmapRaw = bitmap.copy(Bitmap.Config.ARGB_8888, true);
+        photoView.setImageBitmap(bitmap);
+        canvas = new Canvas(bitmap);
         pathMap.clear();
         lineCoordsMap.clear();
     }
@@ -222,7 +223,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             Point intersection = Geometry.getLinesIntersection(pair[0], pair[1]);
             if (intersection != null) {
                 double angle = Geometry.getAngleBetweenLines(pair[0], pair[1]);
-                System.out.println("------- Angle = " + angle + " -------");
 
                 canvas.drawPoint((float) intersection.getX(), (float) intersection.getY(), paintAlt);
                 canvas.drawText(Float.toString((float)angle), (float)intersection.getX(),
@@ -230,7 +230,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                 photoView.invalidate();
             }
         }
-
     }
 
     @Override
@@ -253,14 +252,16 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         int action = event.getAction();
 
         int[] position = getBitmapPositionInsideImageView(photoView); //[left,top] [right,bottom]
-        float scaleX = (float) canvas.getWidth() / (position[2] - position[0]);
-        float scaleY = (float) canvas.getHeight() / (position[3] - position[1]);
+        System.out.println("position " + position[0] + " " + position[1] + " " + position[2] + " " + position[3]);
+        System.out.println("canvas " + canvas.getWidth() + " " + canvas.getHeight());
+        float scaleX = (float) canvas.getWidth() / (position[2]);
+        float scaleY = (float) canvas.getHeight() / (position[3]);
 
         switch (action) {
             case MotionEvent.ACTION_DOWN:
-                if (event.getX() >= position[0] && event.getX() <= position[2]
-                        && event.getY() >= position[1] && event.getY() <= position[3]) {
-
+                System.out.println("event " + event.getX() + " " + event.getY());
+                if (event.getX() >= position[0] && event.getX() <= (position[0] + position[2])
+                        && event.getY() >= position[1] && event.getY() <= (position[1] + position[3])) {
                     downx = (event.getX() - position[0]) * scaleX;
                     downy = (event.getY() - position[1]) * scaleY;
 
@@ -287,8 +288,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             case MotionEvent.ACTION_UP:
                 if (downx != 0 && downy != 0) {
-                    if (event.getX() >= position[0] && event.getX() <= position[2]
-                            && event.getY() >= position[1] && event.getY() <= position[3]) {
+                    if (event.getX() >= position[0] && event.getX() <= (position[0] + position[2])
+                            && event.getY() >= position[1] && event.getY() <= (position[1] + position[3])) {
 
                         upx = (event.getX() - position[0]) * scaleX;
                         upy = (event.getY() - position[1]) * scaleY;
@@ -298,9 +299,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         System.out.println("(upx " + upx + "; upy " + upy + ")");
                         System.out.println("(downx " + downx + "; downy " + downy + ")");
 
-                        float xDiff = Math.abs(upx - downx);
-                        float yDiff = Math.abs(upy - downy);
-
                         //restore bitmap when action down
                         canvas.drawBitmap(bitmapBackup, 0, 0, null);
 
@@ -308,13 +306,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
                         path = new Path();
                         path.moveTo(downx, downy);
                         path.lineTo(upx, upy);
-                        lineCoords = new LineSegment(new Point(downx, downy), new Point(upx, upy));
 
+                        lineCoords = new LineSegment(new Point(downx, downy), new Point(upx, upy));
                         pathMap.put(++lastPathId, path);
                         lineCoordsMap.put(++lastPathId, lineCoords);
                         canvas.drawPath(path, paint);
 
                         photoView.invalidate();
+                        downx = 0;  downy = 0;
+                        upx = 0;    upy = 0;
                     }
                 }
 

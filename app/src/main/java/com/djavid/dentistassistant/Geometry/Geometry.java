@@ -389,8 +389,8 @@ public class Geometry {
     }
 
     public static double getAngleBetweenLines(LineSegment a, LineSegment b) {
-        double[] vectorA = new double[]{Math.abs(a.first.x - a.second.x), Math.abs(a.first.y - a.second.y)};
-        double[] vectorB = new double[]{Math.abs(b.first.x - b.second.x), Math.abs(b.first.y - b.second.y)};
+        double[] vectorA = new double[]{a.second.x - a.first.x, a.second.y - a.first.y};
+        double[] vectorB = new double[]{b.second.x - b.first.x, b.second.y - b.first.y};
 
         double numerator = vectorA[0] * vectorB[0] + vectorA[1] * vectorB[1];
         double denumerator = Math.sqrt((vectorA[0] * vectorA[0] + vectorA[1] * vectorA[1]) *
